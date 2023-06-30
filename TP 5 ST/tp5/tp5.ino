@@ -1,5 +1,5 @@
 /*
-  SCaffidi - Ruderman - Rozenblum
+  Scaffidi - Ruderman - Rozenblum
 */
 #include <ArduinoJson.h>
 #include <Adafruit_GFX.h>
@@ -25,8 +25,8 @@
 #define API_KEY "AIzaSyCpMIjQvVPQzP0ktGFFTpTjFTWUUQl41aU"
 
 // Insert Authorized Email and Corresponding Password
-#define USER_EMAIL "geromartos1907@gmail.com"
-#define USER_PASSWORD "Gero1907"
+#define USER_EMAIL "geroydendo@gmail.com"
+#define USER_PASSWORD "esepe32"
 
 // Insert RTDB URLefine the RTDB URL
 #define DATABASE_URL "https://st-tp5-esp32-firebase-default-rtdb.firebaseio.com/"
@@ -73,11 +73,11 @@ DHT dht(DHTPIN, DHTTYPE);
 float temp;
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
-  
-  int current_screen = 1;
-  float temp_umbral = 28;
-  bool flagSubir, flagBajar;
-  
+
+int current_screen = 1;
+float temp_umbral = 28;
+bool flagSubir, flagBajar;
+
 // Timer variables (send new readings every three minutes)
 unsigned long sendDataPrevMillis = 0;
 
@@ -116,7 +116,7 @@ void setup() {
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(WHITE);
-  
+
   // Initialize BME280 sensor
   initWiFi();
   configTime(0, 0, ntpServer);
@@ -160,102 +160,106 @@ void setup() {
 
 void loop() {
 
-  // Send new readings to database
-  if (Firebase.ready() && (millis() - sendDataPrevMillis > timerDelay || sendDataPrevMillis == 0)) {
-   
-    sendDataPrevMillis = millis();
-    temp = dht.readTemperature();
-    timestamp = getTime();
-    Serial.print ("time: ");
-    Serial.println (timestamp);
-    parentPath = databasePath + "/" + String(timestamp);
-    json.set(tempPath.c_str(), String(dht.readTemperature()));
-    Serial.printf("Set json... %s\n", Firebase.RTDB.setJSON(&fbdo, parentPath.c_str(), &json) ? "ok" : fbdo.errorReason().c_str());
-
-    switch (current_screen){
+  switch (current_screen) {
 
     case PANTALLA_PRINCIPAL:
-{
-   
-    temp = dht.readTemperature();
-    timestamp = getTime();
-    Serial.print ("time: ");
-    Serial.println (timestamp);
-    parentPath = databasePath + "/" + String(timestamp);
-    json.set(tempPath.c_str(), String(dht.readTemperature()));
-    Serial.printf("Set json... %s\n", Firebase.RTDB.setJSON(&fbdo, parentPath.c_str(), &json) ? "ok" : fbdo.errorReason().c_str());
-    display.clearDisplay();
-    display.setCursor(0, 0);
-    display.println(temp);
-    display.println(temp_umbral);
-    display.display();
-   }
-    if (digitalRead(SW1_PIN) == LOW && digitalRead(SW2_PIN) == LOW){
-      current_screen = ESPERA_CAMBIAR;
-    }
-}
-        break;
 
-    case ESPERA_CAMBIAR: 
-  {
-    if(digitalRead(SW1_PIN) == HIGH && digitalRead(SW2_PIN) == HIGH)
+      if (Firebase.ready() && (millis() - sendDataPrevMillis > timerDelay || sendDataPrevMillis == 0)) {
+
+        sendDataPrevMillis = millis();
+        temp = dht.readTemperature();
+        timestamp = getTime();
+        Serial.print ("time: ");
+        Serial.println (timestamp);
+        parentPath = databasePath + "/" + String(timestamp);
+        json.set(tempPath.c_str(), String(dht.readTemperature()));
+        Serial.printf("Set json... %s\n", Firebase.RTDB.setJSON(&fbdo, parentPath.c_str(), &json) ? "ok" : fbdo.errorReason().c_str());
+        temp = dht.readTemperature();
+        timestamp = getTime();
+        Serial.print ("time: ");
+        Serial.println (timestamp);
+        parentPath = databasePath + "/" + String(timestamp);
+        json.set(tempPath.c_str(), String(dht.readTemperature()));
+        Serial.printf("Set json... %s\n", Firebase.RTDB.setJSON(&fbdo, parentPath.c_str(), &json) ? "ok" : fbdo.errorReason().c_str());
+      }
+
+        temp = dht.readTemperature();
+        display.clearDisplay();
+        display.setCursor(0, 0);
+        display.println(temp);
+        display.println(temp_umbral);
+        display.display();
+        
+      if (digitalRead(SW1_PIN) == LOW && digitalRead(SW2_PIN) == LOW) {
+        Serial.println("botones apretados");
+        current_screen = ESPERA_CAMBIAR;
+      }
+
+      break;
+
+    case ESPERA_CAMBIAR:
+
+      if (digitalRead(SW1_PIN) == HIGH && digitalRead(SW2_PIN) == HIGH)
       {
         current_screen = PANTALLA_CAMBIAR;
       }
-  }
 
-        break;
+
+      break;
 
     case PANTALLA_CAMBIAR:
-{
 
- 
-    display.clearDisplay();
-    display.setCursor(0, 0);
-    display.println(timerDelay);
-    display.println("SW1 para -30s");
-    display.println("SW2 para +30s");
-    display.display();
-  }
-    if(digitalRead(SW2_PIN) == LOW) 
+      display.clearDisplay();
+      display.setCursor(0, 0);
+      display.println(timerDelay);
+      display.println("SW1 para -30s");
+      display.println("SW2 para +30s");
+      display.display();
+
+      if (digitalRead(SW2_PIN) == LOW)
       {
         flagBajar = HIGH;
       }
-      if(digitalRead(SW2_PIN) == HIGH && flagBajar == HIGH) 
+      if (digitalRead(SW2_PIN) == HIGH && flagBajar == HIGH)
       {
-        flagBajar = LOW;                   
-        timerDelay = timerDelay -30000;
-      }    
+        flagBajar = LOW;
+        timerDelay = timerDelay - 30000;
+        if (timerDelay < 0) {
+          timerDelay = 0;
+        }
+      }
 
-      if(digitalRead(SW1_PIN) == LOW) 
+      if (digitalRead(SW1_PIN) == LOW)
       {
         flagSubir = HIGH;
       }
-      if(digitalRead(SW1_PIN) == HIGH && flagSubir == HIGH)
+      if (digitalRead(SW1_PIN) == HIGH && flagSubir == HIGH)
       {
         flagSubir = LOW;
-         timerDelay = timerDelay +30000;
-      }    
-      
-      if(digitalRead(SW1_PIN) == LOW && digitalRead(SW2_PIN) == LOW)  
+        timerDelay = timerDelay + 30000;
+      }
+
+      if (digitalRead(SW1_PIN) == LOW && digitalRead(SW2_PIN) == LOW)
       {
+        Serial.println("botones apretados");
         current_screen = ESPERA_PRINCIPAL;
       }
-}
-     break; 
 
-    case ESPERA_PRINCIPAL:
-    {
-      if(digitalRead(SW1_PIN) == HIGH && digitalRead(SW2_PIN) == HIGH)
-      {
-        current_screen = PANTALLA_PRINCIPAL;
-      }
-    }
 
       break;
-  }  
 
-    
+
+case ESPERA_PRINCIPAL:
+
+      if (digitalRead(SW1_PIN) == HIGH && digitalRead(SW2_PIN) == HIGH)
+      {
+        Serial.println("pasar a pantalla principal");
+        current_screen = PANTALLA_PRINCIPAL;
+      }
+
+
+      break;
+
 
   }
 }
